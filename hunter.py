@@ -1,6 +1,6 @@
-"""project-hunter — roz project-leads uthao, dedupe karo, dashboard ke liye JSON likho.
+"""project-hunter — collect client leads daily, dedupe them, write JSON for the dashboard.
 
-Chalao:  python hunter.py
+Run:  python hunter.py
 """
 
 import json
@@ -31,14 +31,14 @@ def main() -> int:
         print(f"[{src.NAME}]")
         try:
             scraped.extend(src.fetch(cfg))
-        except Exception as err:  # ek source gire to baaki chalte rahein
+        except Exception as err:  # one broken source must not stop the rest
             print(f"  ! {src.NAME} crashed: {type(err).__name__}: {err}")
 
-    fresh, weak, scams = [], 0, 0
+    fresh, weak, scams, shady = [], 0, 0, 0
     for lead in scraped:
         if not store.is_new(lead):
             continue
-        store.remember(lead)          # rejected lead bhi yaad rakho, roz dubara na aaye
+        store.remember(lead)          # remember rejects too, so they do not return daily
 
         lead["trust"] = scam.check(lead)
         if lead["trust"]["level"] == "scam":
@@ -48,6 +48,9 @@ def main() -> int:
                 print(f"  x SCAM: {lead['title'][:52]} -> {lead['trust']['reasons'][0]}")
                 print(f"          match: {lead['trust']['matched']}")
                 continue
+        elif lead["trust"]["level"] == "suspicious":
+            shady += 1
+
         lead["score"] = extract.score_lead(lead, cfg)
         if lead["score"] < cfg["min_score_to_publish"]:
             weak += 1
@@ -56,18 +59,17 @@ def main() -> int:
 
     store.save_seen()
     payload = store.publish(fresh)
-    store.publish_public(payload)   # Pages ke liye safe copy (naam/contact ke bina)
+    store.publish_public(payload)   # sanitised copy for GitHub Pages
 
     print("\n" + "-" * 52)
     print(f"scraped   : {len(scraped)}")
-    print(f"naye      : {len(fresh)}")
-    print(f"chhode    : {len(scraped) - len(fresh) - weak - scams} duplicate, "
-          f"{scams} SCAM, {weak} kamzor")
-    shady = sum(1 for l in payload["leads"] if l.get("trust", {}).get("level") == "suspicious")
-    print(f"live board: {payload['total']} leads  ({shady} pe ⚠ suspicious badge)")
+    print(f"new       : {len(fresh)}")
+    print(f"dropped   : {len(scraped) - len(fresh) - weak - scams} duplicates, "
+          f"{scams} scams, {weak} low score")
+    print(f"live board: {payload['total']} leads  ({shady} flagged suspicious)")
 
     with_budget = sum(1 for l in payload["leads"] if l["budget"]["stated"])
-    print(f"budget likha hua: {with_budget}")
+    print(f"budget stated: {with_budget}")
 
     by_cat = {}
     for lead in payload["leads"]:
@@ -76,7 +78,7 @@ def main() -> int:
         print(f"  {cat:<16} {n}")
 
     if notify.send_leads(fresh):
-        print("telegram alert bheja")
+        print("telegram alert sent")
 
     print("-" * 52)
     print("dashboard: http://localhost/pr/project-hunter/site/")

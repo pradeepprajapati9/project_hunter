@@ -16,7 +16,7 @@ Then open the dashboard: <http://localhost/pr/project-hunter/site/>
 (any static web server works; the path above assumes XAMPP with the project inside `htdocs`)
 
 A full run takes about 4-5 minutes because Reddit rate-limits anonymous feeds.
-Messages like `rate limit, 15s ruk kar dubara...` in the console are expected — the script waits and retries.
+Messages like `rate limited, waiting 15s before retry...` in the console are expected — the script backs off and retries.
 
 To run it automatically, point Windows Task Scheduler at `run.bat` (twice a day works well).
 

@@ -3,7 +3,7 @@ name: Hunt leads and publish dashboard
 on:
   schedule:
     - cron: "0 1,7,13,19 * * *"   # UTC — roughly 6:30am, 12:30pm, 6:30pm, 12:30am IST
-  workflow_dispatch:              # Actions tab se manually bhi chala sakte ho
+  workflow_dispatch:              # also runnable by hand from the Actions tab
 
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Dedupe memory + pichhle run ke leads wapas lao
+      # Bring back the dedupe memory and the previous run's board
       - name: Restore data from cache
         uses: actions/cache@v4
         with:

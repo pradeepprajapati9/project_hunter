@@ -37,10 +37,10 @@
     <div class="card-body">
       <div class="row g-2 align-items-center">
         <div class="col-12 col-lg-4">
-          <input type="search" class="form-control" id="q" placeholder="Search kaam, skill, client…">
+          <input type="search" class="form-control" id="q" placeholder="Search work, skill or client…">
         </div>
         <div class="col-6 col-lg-3">
-          <select class="form-select" id="cat"><option value="all">Sabhi categories</option></select>
+          <select class="form-select" id="cat"><option value="all">All categories</option></select>
         </div>
         <div class="col-6 col-lg-2">
           <select class="form-select" id="sort">
@@ -61,7 +61,7 @@
             <label class="btn btn-outline-danger" for="hideShady">Safe</label>
 
             <input type="checkbox" class="btn-check" id="hideDone" autocomplete="off">
-            <label class="btn btn-outline-secondary" for="hideDone">Naye</label>
+            <label class="btn btn-outline-secondary" for="hideDone">Open</label>
           </div>
         </div>
       </div>
@@ -73,8 +73,7 @@
   <div class="alert alert-secondary text-center my-5 d-none" id="notice"></div>
 
   <p class="text-body-secondary small text-center mt-5 mb-0">
-    Sources: Reddit (r/forhire, r/slavelabour, r/DoneDirtCheap, r/jobbit, r/HireaWriter) + Hacker News freelancer thread.
-    Refresh: <code>python hunter.py</code>
+    Leads are collected automatically from public freelance boards, screened for scams, and refreshed several times a day.
   </p>
 </main>
 
@@ -92,7 +91,7 @@
       </div>
       <div class="modal-footer">
         <span class="me-auto small text-body-secondary" id="modalContact"></span>
-        <a class="btn btn-primary" id="modalLink" target="_blank" rel="noopener">Reddit pe kholo</a>
+        <a class="btn btn-primary" id="modalLink" target="_blank" rel="noopener">Open original post</a>
       </div>
     </div>
   </div>

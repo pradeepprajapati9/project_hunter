@@ -1,4 +1,4 @@
 @echo off
-REM Roz chalane ke liye — Task Scheduler me isi file ko daalo.
+REM Daily run — point Windows Task Scheduler at this file.
 cd /d "%~dp0"
 python hunter.py >> data\run.log 2>&1

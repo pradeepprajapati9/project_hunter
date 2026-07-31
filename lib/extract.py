@@ -1,4 +1,4 @@
-"""Lead se kaam ki cheezein nikalna: budget, contact, category, urgency."""
+"""Pull the useful bits out of a lead: budget, contact, category, flags, score."""
 
 import html
 import re
@@ -21,7 +21,7 @@ _BUDGET_PATTERNS = [
 _HOURLY = re.compile(r"(?:/\s?hr\b|/\s?hour\b|per\s?hour|hourly|an hour)", re.I)
 _BUDGET_WORD = re.compile(r"\b(budget|pay(?:ing|ment)?|rate|price|offer(?:ing)?|comp(?:ensation)?|salary|fee)\b", re.I)
 
-# 100k views / 4k video / 1080p -> paisa nahi hai
+# "100k views", "4k video", "1080p" — numbers that are not money
 _FALSE_MONEY = re.compile(r"\b\d+\s?(?:k)?\s?(?:views?|subs?|subscribers?|followers?|words?|px|p\b|fps|gb|mb|hours?|days?|weeks?|months?)\b", re.I)
 
 
@@ -36,7 +36,7 @@ def find_budget(text: str) -> dict:
             window = text[max(0, m.start() - 40): m.end() + 40]
             if _FALSE_MONEY.search(raw):
                 continue
-            # bare number (no currency symbol) sirf tab maano jab paas me budget word ho
+            # a bare number counts only when a money word sits next to it
             if not re.search(_CUR, raw) and not _BUDGET_WORD.search(window):
                 continue
             return {
@@ -60,7 +60,7 @@ _APPLY_LINK = re.compile(r"https?://(?:www\.)?(?:forms\.gle|docs\.google\.com/fo
 
 
 def find_contact(text: str) -> dict:
-    """Contact channel nikalo. Email > telegram > form > DM."""
+    """Find how to reach the poster. Email beats telegram beats form beats DM."""
     out = {"kind": "", "value": ""}
     if not text:
         return out
@@ -85,15 +85,15 @@ def find_contact(text: str) -> dict:
 # --- category -------------------------------------------------------------
 
 def classify(title: str, body: str, categories: dict) -> dict:
-    """Har lead ko category do — do pass me.
+    """Give every lead a category, in two passes.
 
-    Pass 1: poora phrase match ("video editor")   -> weight 3
+    Pass 1: whole phrase match ("video editor")  -> weight 3
     Pass 2: single word match ("video", "editor") -> weight 1
-    Dono fail -> 'other', aur topic hint alag se.
+    Neither hits -> 'other', with a topic keyword as a hint.
 
     Return {'category': 'web-dev', 'auto': False, 'topic': 'scraper'}
     """
-    blob = " " + f"{title} {title} {body}".lower() + " "   # title ka weight double
+    blob = " " + f"{title} {title} {body}".lower() + " "   # title counts double
     words = set(re.findall(r"[a-z][a-z+#.]{2,}", blob))
     topic = _topic_hint(title, body)
 
@@ -111,15 +111,15 @@ def classify(title: str, body: str, categories: dict) -> dict:
 
     if scores:
         best = max(scores, key=lambda c: (scores[c], c))
-        if scores[best] >= 3:                       # pakka match
+        if scores[best] >= 3:                       # confident match
             return {"category": best, "auto": False, "topic": topic}
-        if scores[best] >= 2:                       # word-level andaza
+        if scores[best] >= 2:                       # word-level guess
             return {"category": best, "auto": True, "topic": topic}
 
     return {"category": "other", "auto": True, "topic": topic}
 
 
-# generic words jo category ka naam nahi ban sakte
+# words too generic to describe what the work is
 _NOISE = {
     "hiring", "hire", "hired", "need", "needed", "needs", "looking", "look", "want", "wanted",
     "someone", "somebody", "person", "people", "help", "please", "urgent", "asap", "paid",
@@ -138,7 +138,7 @@ _NOISE = {
 
 
 def _topic_hint(title: str, body: str) -> str:
-    """Card pe dikhane ke liye ek keyword — kaam kis cheez ka hai."""
+    """One keyword for the card — roughly what the work is about."""
     weights = {}
     for text, weight in ((title, 4), (body[:400], 1)):
         for word in re.findall(r"[a-z][a-z'\-]{3,}", (text or "").lower()):
@@ -179,7 +179,7 @@ def find_flags(text: str) -> list:
 
 
 def score_lead(lead: dict, cfg: dict) -> int:
-    """0-100. Kitna worth hai iss lead pe time dena."""
+    """0-100. How much this lead is worth spending time on."""
     from datetime import datetime, timedelta, timezone
 
     w = cfg["score_weights"]
@@ -211,7 +211,7 @@ def score_lead(lead: dict, cfg: dict) -> int:
 
 
 def clean_text(raw: str, limit: int = 700) -> str:
-    """HTML tags/entities hatao, whitespace normalise karo, trim karo."""
+    """Strip HTML tags and entities, normalise whitespace, trim."""
     if not raw:
         return ""
     txt = re.sub(r"<br\s*/?>|</p>|</div>", "\n", raw, flags=re.I)

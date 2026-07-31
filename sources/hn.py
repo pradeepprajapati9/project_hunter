@@ -1,7 +1,7 @@
-"""Hacker News ka monthly 'Freelancer? Seeking freelancer?' thread.
+"""The monthly Hacker News "Freelancer? Seeking freelancer?" thread.
 
-Us thread me 'SEEKING FREELANCER' wale comments = client (kaam dene wala).
-'SEEKING WORK' wale = freelancer, unhe chhod dete hain.
+Comments marked SEEKING FREELANCER are clients with work to give out.
+Comments marked SEEKING WORK are freelancers, so they are skipped.
 """
 
 import re
@@ -36,7 +36,7 @@ def fetch(cfg: dict) -> list:
     ][: hcfg["threads_to_scan"]]
 
     if not threads:
-        print("  hn: monthly thread nahi mila")
+        print("  hn: monthly thread not found")
         return []
 
     leads = []
@@ -97,7 +97,7 @@ def _to_lead(comment: dict, thread: dict, cfg: dict):
 
 
 def _make_title(body: str) -> str:
-    """'SEEKING FREELANCER | Acme | Remote | need a scraper' -> pehli kaam ki line."""
+    """'SEEKING FREELANCER | Acme | Remote | need a scraper' -> first useful line."""
     text = _CLIENT_MARK.sub("", body, count=1).lstrip(" |:-–—\n")
     line = next((l.strip(" |:-–—") for l in text.splitlines() if len(l.strip()) > 8), "")
     if not line:

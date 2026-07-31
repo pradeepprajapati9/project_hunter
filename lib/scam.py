@@ -1,8 +1,8 @@
-"""Fake / scam lead pakadne wala filter.
+"""Filter that catches fake and scam leads.
 
-Har rule ka weight hota hai. Total nikal kar level deta hai:
-    >= 60  scam        (board pe nahi aayega)
-    >= 25  suspicious  (aayega, par red badge ke saath)
+Every rule carries a weight. The total decides the level:
+    >= 60  scam        (kept off the board)
+    >= 25  suspicious  (shown with a warning badge)
     else   clean
 """
 
@@ -10,14 +10,14 @@ import re
 
 # (weight, reason, pattern)
 RULES = [
-    # --- paisa pehle maango = pakka scam ---
-    (60, "advance fee maang raha hai",
+    # --- money asked upfront: always a scam ---
+    (60, "asks for an advance fee",
      r"\b(registration|joining|training|onboarding|security|application)\s+fee\b"
      r"|\bpay\s+(?:a\s+)?(?:deposit|fee|upfront|in advance)\b"
      r"|\bupfront\s+payment\s+(?:required|needed)\b"
      r"|\bbuy\s+(?:your own\s+)?(?:equipment|software|kit)\s+first\b"),
 
-    (60, "gift card / voucher se payment",
+    (60, "payment in gift cards or vouchers",
      r"\bgift\s?cards?\b|\bsteam\s?cards?\b|\bitunes\s?cards?\b|\bgoogle play cards?\b"),
 
     (60, "money mule / cheque scam",
@@ -26,14 +26,14 @@ RULES = [
      r"|\bwestern union\b|\bmoney\s?gram\b|\bmoney transfer agent\b"
      r"|\buse\s+your\s+(?:own\s+)?bank\s+account\b|\bbank\s+account\s+(?:rent|lend)\b"),
 
-    (60, "ID / bank / OTP maang raha hai",
+    (60, "asks for ID, bank details or OTP",
      r"\baadha?ar\b|\bpan\s?card\b|\bssn\b|\bsocial security number\b"
      r"|\bselfie\s+with\s+(?:your\s+)?id\b|\bid\s?proof\b"
      r"|\b(?:share|send)\s+your\s+(?:bank|account)\s+details\b|\botp\b"
      r"|\byour\s+(?:sim|phone number)\s+for\s+verification\b"),
 
-    # --- kaam hi fake / illegal hai ---
-    (60, "fake review / fake engagement ka kaam",
+    # --- the work itself is fake or illegal ---
+    (60, "fake reviews or fake engagement",
      r"\bfake\s+(?:reviews?|accounts?|profiles?|traffic|followers?)\b"
      r"|\b(?:write|post|leave)\s+(?:a\s+)?(?:5|five)[\s-]?star\s+reviews?\b"
      r"|\bupvotes?\s+for\s+(?:money|pay)\b|\bvote\s+manipulation\b"
@@ -45,7 +45,7 @@ RULES = [
      r"|\bexam\s+(?:proxy|helper)\b|\blogin\s+as\s+me\s+for\s+(?:class|exam)\b"
      r"|\bimpersonate\b|\bpretend\s+to\s+be\s+me\b"),
 
-    (60, "hacking / bypass ka kaam",
+    (60, "hacking or verification bypass",
      r"\bhack(?:ing)?\s+(?:into|account|instagram|facebook|whatsapp|phone)\b"
      r"|\bbypass\s+(?:verification|kyc|otp|2fa|paywall|ban)\b"
      r"|\bcarding\b|\bcc\s+dumps?\b|\bphishing\b|\bddos\b|\bspoof(?:ing)?\s+(?:caller|sms)\b"
@@ -58,31 +58,31 @@ RULES = [
      r"|\bbinary options\b|\bhyip\b"),
 
     # --- classic fake job posting patterns ---
-    (60, "paid fake engagement (comment/like/follow/vote)",
-     # "paid per comment", "$2 for each review" — engagement ka rate
+    (60, "paying for engagement (comments, likes, follows, votes)",
+     # "paid per comment", "$2 for each review" — a rate per engagement
      r"\b(?:pay|paid|paying|\$\s?\d+)\s+(?:per|for each|for every|each|a)\s+"
      r"(?:comment|like|upvote|follow(?:er)?|subscriber?|review|vote|rating|share)s?\b"
-     # "upvote my listing", "subscribe to our channel" — commercial page pe engagement
-     # (note: "comment on this post" ko chhod diya — Reddit pe apply karne ka normal tarika hai)
+     # "upvote my listing", "subscribe to our channel" — engagement on a commercial page
+     # (note: plain "comment on this post" is excluded — that is how people apply on Reddit)
      r"|\b(?:like|upvote|subscribe|follow|vote|rate)\w*\s+(?:on\s+|for\s+|to\s+)?(?:my|mine|our|this)\b"
      r"[^.\n]{0,40}\b(?:listing|channel|profile|product|store|app|business)s?\b"
      r"|\bboost\s+(?:my|our)\s+(?:post|engagement|ranking|rating)\b"
      r"|\b(?:need|want|looking for)\s+\d+\s+(?:upvotes?|likes?|followers?|reviews?|ratings?)\b"),
 
-    (60, "'copy paste se weekly earning' type recruitment spam",
+    (60, "copy-paste weekly earning recruitment spam",
      r"\burgent\s+recruitment\b"
      r"|\bearn\s+up\s+to\s+\$?\d+[^.\n]{0,30}\b(?:weekly|per week|daily|per day)\b"
      r"|\b(?:simple|easy)\s+copy\s?(?:&|and|-)?\s?paste\b"
      r"|\bdata entry\s+(?:job\s+)?from home[^.\n]{0,30}\bno experience\b"
      r"|\bwork from home\s+(?:job\s+)?(?:with\s+)?daily payment\b"),
 
-    (35, "unrealistic kamai ka vaada",
+    (35, "unrealistic earning promise",
      r"\bearn\s+\$?\d{3,}\s*(?:\+|plus)?\s*(?:per|/|a)\s?day\b"
      r"|\b\$\d{3,}\s*(?:per|/|a)\s?day\b|\beasy money\b|\bunlimited earning\b"
      r"|\bno experience (?:needed|required)[^.]{0,40}\$\d{3,}\b"
      r"|\bwork\s+(?:just\s+)?\d\s?hours?\s+(?:a|per)\s?day[^.]{0,30}\$\d{3,}\b"),
 
-    (30, "sirf Telegram/WhatsApp pe baat, koi detail nahi",
+    (30, "contact only through Telegram or WhatsApp",
      r"\b(?:text|message|dm|contact)\s+me\s+on\s+(?:telegram|whatsapp)\s+only\b"
      r"|\btelegram\s+only\b|\bwhatsapp\s+only\b"),
 
@@ -93,14 +93,14 @@ RULES = [
      r"\b(?:paid|payment|pay)\s+(?:in|via|with)\s+(?:usdt|btc|bitcoin|eth|crypto)\b"
      r"|\bcrypto\s+wallet\s+(?:address\s+)?(?:required|needed)\b"),
 
-    (25, "shady dark-web / anonymous framing",
+    (25, "anonymous or dark-web framing",
      r"\bno questions asked\b|\bdiscreet\s+(?:work|job)\b|\buntraceable\b"
      r"|\bburner\s+(?:account|phone)\b|\bfake\s+(?:id|documents?|certificates?)\b"),
 ]
 
 _COMPILED = [(w, reason, re.compile(pat, re.I)) for w, reason, pat in RULES]
 
-# paisa hi nahi mil raha — scam nahi, par time waste
+# no money involved — not a scam, but not worth the time either
 _UNPAID = re.compile(
     r"\b(?:unpaid|no pay|non-?paying|for exposure|for free|volunteer)\b"
     r"|\bcommission\s?only\b|\brev(?:enue)?\s?share\s+only\b|\bequity\s+only\b"
@@ -110,7 +110,7 @@ _UNPAID = re.compile(
 
 _FREE_TEST = re.compile(r"\b(?:free|unpaid)\s+(?:test|trial|sample)\s+(?:task|work|project)\b", re.I)
 
-# saste kaam pe zyada paisa = shaq
+# trivial work with a large payout is a red flag
 _EASY_TASK = re.compile(r"\b(?:data entry|typing|survey|copy paste|copy-paste|chat(?:ting)? support|form filling|simple task)\b", re.I)
 
 
@@ -129,28 +129,28 @@ def check(lead: dict) -> dict:
 
     if _UNPAID.search(blob):
         points += 20
-        reasons.append("paisa nahi mil raha (unpaid/commission-only)")
+        reasons.append("unpaid or commission-only work")
 
     if _FREE_TEST.search(blob):
         points += 20
-        reasons.append("pehle free test task maang raha hai")
+        reasons.append("asks for a free test task first")
 
-    # aasan kaam + mota paisa = shaq
+    # trivial work with a large payout
     if _EASY_TASK.search(blob) and _big_money(lead):
         points += 30
-        reasons.append("mamuli kaam ke liye bahut zyada paisa")
+        reasons.append("payout too high for the work described")
 
-    # na budget, na detail, na contact
+    # no budget, no details, no contact
     if len(lead.get("body", "")) < 60 and not lead["budget"]["stated"] and not lead["contact"]["kind"]:
         points += 25
-        reasons.append("koi detail nahi — na budget na contact")
+        reasons.append("no details at all — no budget, no contact")
 
     level = "scam" if points >= 60 else "suspicious" if points >= 25 else "clean"
     return {"level": level, "points": min(100, points), "reasons": reasons[:4], "matched": matched[:4]}
 
 
 def _big_money(lead: dict) -> bool:
-    """Budget $300+ (ya ₹25,000+) ho to True."""
+    """True when the budget is $300 or more (₹25,000 or more)."""
     if not lead["budget"]["stated"]:
         return False
     raw = lead["budget"]["raw"]

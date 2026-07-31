@@ -1,7 +1,7 @@
 """Reddit hiring posts.
 
-Reddit ka .json endpoint ab bina app-credentials 403 deta hai,
-par public .rss feed khulta hai — isliye Atom parse karte hain.
+Reddit's .json endpoint now returns 403 without registered app credentials,
+but the public .rss feed still works, so we parse Atom instead.
 """
 
 import re
@@ -30,7 +30,7 @@ def fetch(cfg: dict) -> list:
         try:
             entries = ET.fromstring(xml).findall(f"{ATOM}entry")
         except ET.ParseError:
-            print(f"  ! r/{sub['name']}: feed parse fail")
+            print(f"  ! r/{sub['name']}: could not parse feed")
             continue
 
         hits = 0

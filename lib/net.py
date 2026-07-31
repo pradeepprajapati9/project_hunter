@@ -1,4 +1,4 @@
-"""Ek hi jagah se HTTP — retry, delay, timeout."""
+"""All HTTP goes through here — retries, spacing between calls, timeouts."""
 
 import time
 
@@ -19,10 +19,10 @@ def _fetch(url: str, user_agent: str, accept: str, timeout: int, delay: float, t
             _last_call["t"] = time.monotonic()
             if resp.status_code == 429:
                 if attempt == tries:
-                    print(f"  ! {url[:70]} -> rate limited (429), skip")
+                    print(f"  ! {url[:70]} -> rate limited (429), skipped")
                     return None
                 wait = _retry_after(resp) or 15 * attempt
-                print(f"  . rate limit, {wait}s ruk kar dubara...")
+                print(f"  . rate limited, waiting {wait}s before retry...")
                 time.sleep(wait)
                 continue
             resp.raise_for_status()
@@ -44,18 +44,18 @@ def _retry_after(resp) -> int:
 
 
 def get_json(url: str, user_agent: str, timeout: int = 20, delay: float = 2.0, tries: int = 3):
-    """JSON laao. Fail hone pe None, crash nahi."""
+    """Fetch JSON. Returns None on failure instead of raising."""
     resp = _fetch(url, user_agent, "application/json", timeout, delay, tries)
     if resp is None:
         return None
     try:
         return resp.json()
     except ValueError:
-        print(f"  ! {url[:70]} -> JSON nahi hai")
+        print(f"  ! {url[:70]} -> response was not JSON")
         return None
 
 
 def get_text(url: str, user_agent: str, timeout: int = 20, delay: float = 2.0, tries: int = 3):
-    """Raw text (RSS/XML) laao."""
+    """Fetch raw text (RSS / XML)."""
     resp = _fetch(url, user_agent, "application/atom+xml, application/rss+xml, text/xml", timeout, delay, tries)
     return resp.text if resp is not None else None

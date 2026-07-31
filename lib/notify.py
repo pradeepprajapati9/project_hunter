@@ -1,6 +1,6 @@
-"""Telegram alert — nayi high-score leads turant phone pe.
+"""Telegram alerts — new high-scoring leads pushed straight to a phone.
 
-Credentials env se (ya secrets.json se), config.json me kabhi na rakhna:
+Credentials come from the environment (or secrets.json), never from config.json:
     set TELEGRAM_BOT_TOKEN=123:abc
     set TELEGRAM_CHAT_ID=987654
 """
@@ -29,7 +29,7 @@ def _creds():
 
 
 def send_leads(leads: list, top: int = 8) -> bool:
-    """Sabse acche leads Telegram pe bhejo. Credentials na ho to chup-chaap skip."""
+    """Send the best leads to Telegram. Skips silently when credentials are missing."""
     token, chat = _creds()
     if not token or not chat:
         return False
@@ -37,7 +37,7 @@ def send_leads(leads: list, top: int = 8) -> bool:
         return False
 
     best = sorted(leads, key=lambda l: -(l.get("score") or 0))[:top]
-    lines = [f"<b>{len(leads)} naye project leads</b>", ""]
+    lines = [f"<b>{len(leads)} new project leads</b>", ""]
     for l in best:
         money = l["budget"]["raw"] + ("/hr" if l["budget"]["hourly"] else "") if l["budget"]["stated"] else "budget ?"
         lines.append(
@@ -46,7 +46,7 @@ def send_leads(leads: list, top: int = 8) -> bool:
             f"{l['url']}\n"
         )
     if len(leads) > top:
-        lines.append(f"+{len(leads) - top} aur dashboard pe.")
+        lines.append(f"+{len(leads) - top} more on the dashboard.")
 
     try:
         resp = requests.post(
@@ -62,5 +62,5 @@ def send_leads(leads: list, top: int = 8) -> bool:
         resp.raise_for_status()
         return True
     except requests.RequestException as err:
-        print(f"  ! telegram alert fail: {type(err).__name__}")
+        print(f"  ! telegram alert failed: {type(err).__name__}")
         return False

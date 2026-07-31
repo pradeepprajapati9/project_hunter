@@ -1,4 +1,4 @@
-/* project-hunter dashboard — Bootstrap only, koi custom CSS nahi */
+/* project-hunter dashboard — Bootstrap only, no custom CSS */
 
 const CAT_LABEL = {
   'web-dev': 'Web dev',
@@ -21,7 +21,14 @@ const CAT_LABEL = {
   'other': 'Other',
 };
 
-const CONTACT_LABEL = { email: 'Email diya hai', telegram: 'Telegram', form: 'Apply form', discord: 'Discord', dm: 'DM karna hai' };
+const CONTACT_LABEL = {
+  email: 'Email address in post',
+  telegram: 'Telegram',
+  form: 'Application form',
+  discord: 'Discord',
+  dm: 'Direct message',
+};
+
 const DONE_KEY = 'ph:contacted';
 const THEME_KEY = 'ph:theme';
 const SNIPPET = 150;
@@ -43,13 +50,13 @@ const state = {
 
 /* ---------- load ---------- */
 
-/* Local pe poora data (../data/), GitHub Pages pe safe copy (data/) */
+/* Locally the full file is used; on GitHub Pages only the sanitised copy exists. */
 async function fetchLeads() {
   for (const path of ['../data/leads.json', 'data/leads.json']) {
     try {
       const res = await fetch(path + '?t=' + Date.now());
       if (res.ok) return await res.json();
-    } catch (err) { /* agla path try karo */ }
+    } catch (err) { /* try the next path */ }
   }
   return null;
 }
@@ -59,13 +66,13 @@ async function load() {
     const data = await fetchLeads();
     if (!data) throw new Error('no data');
     state.leads = data.leads || [];
-    el('stamp').textContent = `updated ${timeAgo(data.generated_at)} · +${data.new_this_run || 0} naye`;
+    el('stamp').textContent = `updated ${timeAgo(data.generated_at)} · ${data.new_this_run || 0} new`;
     el('navCount').textContent = state.leads.length;
     renderStats();
     fillCategories();
     render();
   } catch (err) {
-    notice('leads.json nahi mila — pehle <code>python hunter.py</code> chalao.');
+    notice('No leads file found — run <code>python hunter.py</code> first.');
   }
 }
 
@@ -75,8 +82,8 @@ function renderStats() {
   const leads = state.leads;
   const tiles = [
     { n: leads.length, label: 'Live leads', color: 'text-body' },
-    { n: leads.filter((l) => hoursAgo(l.posted_at) < 24).length, label: 'Aaj ke', color: 'text-primary' },
-    { n: leads.filter((l) => l.budget.stated).length, label: 'Budget likha hai', color: 'text-success' },
+    { n: leads.filter((l) => hoursAgo(l.posted_at) < 24).length, label: 'Posted today', color: 'text-primary' },
+    { n: leads.filter((l) => l.budget.stated).length, label: 'Budget stated', color: 'text-success' },
     { n: state.done.size, label: 'Contacted', color: 'text-body-secondary' },
   ];
 
@@ -101,7 +108,7 @@ function fillCategories() {
     .sort((a, b) => counts[b] - counts[a])
     .map((c) => `<option value="${esc(c)}">${esc(catLabel(c))} (${counts[c]})</option>`);
 
-  el('cat').innerHTML = `<option value="all">Sabhi categories (${state.leads.length})</option>` + opts.join('');
+  el('cat').innerHTML = `<option value="all">All categories (${state.leads.length})</option>` + opts.join('');
 }
 
 /* ---------- filter + sort ---------- */
@@ -135,7 +142,7 @@ function render() {
 
   if (!leads.length) {
     grid.innerHTML = '';
-    notice('Is filter me kuch nahi mila.');
+    notice('Nothing matches these filters.');
     return;
   }
   el('notice').classList.add('d-none');
@@ -152,7 +159,7 @@ function badges(l) {
     out.push(`<span class="badge text-bg-success">${esc(l.budget.raw)}${l.budget.hourly ? '/hr' : ''}</span>`);
   }
   if (l.trust && l.trust.level === 'suspicious') {
-    out.push(`<span class="badge text-bg-danger" title="${esc((l.trust.reasons || []).join(' • '))}">⚠ dhyan se</span>`);
+    out.push(`<span class="badge text-bg-danger" title="${esc((l.trust.reasons || []).join(' • '))}">⚠ check carefully</span>`);
   }
   (l.flags || []).forEach((f) => {
     const tone = f === 'urgent' ? 'text-bg-warning' : 'text-bg-light';
@@ -206,14 +213,14 @@ function openLead(id) {
 
   el('modalTitle').textContent = l.title;
   el('modalTags').innerHTML = badges(l);
-  el('modalBody').innerHTML = (l.body || '(koi detail nahi)')
+  el('modalBody').innerHTML = (l.body || '(no details in the post)')
     .split('\n')
     .filter((line) => line.trim())
     .map((line) => `<p class="mb-2">${esc(line)}</p>`)
     .join('');
   el('modalContact').textContent = l.contact.kind
     ? `${CONTACT_LABEL[l.contact.kind] || l.contact.kind}${l.contact.value ? ': ' + l.contact.value : ''}`
-    : 'Contact post me hi hai';
+    : 'Contact details are in the post';
   el('modalLink').href = l.url;
   modal.show();
 }

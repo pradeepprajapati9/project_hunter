@@ -1,4 +1,4 @@
-"""Dedupe memory + leads file. Sab kuch plain JSON, koi DB nahi."""
+"""Dedupe memory and lead files. Plain JSON, no database."""
 
 import hashlib
 import json
@@ -27,7 +27,7 @@ def _iso(dt: datetime) -> str:
 
 
 def title_fingerprint(title: str) -> str:
-    """Cross-post pakadne ke liye: same words = same lead, order chahe badle."""
+    """Catches cross-posts: same words means same lead, whatever the word order."""
     words = re.findall(r"[a-z0-9]+", (title or "").lower())
     core = sorted({w for w in words if w not in _STOP and len(w) > 2})
     return hashlib.sha1(" ".join(core[:12]).encode()).hexdigest()[:16]
@@ -69,7 +69,7 @@ class Store:
     # -- leads -------------------------------------------------------------
 
     def reject(self, lead: dict) -> None:
-        """Scam bole gaye leads yahan rakho — baad me check kar sakein ki galti nahi hui."""
+        """Keep everything dropped as a scam, so false positives can be reviewed."""
         with open(REJECTED_FILE, "a", encoding="utf-8") as f:
             f.write(json.dumps(lead, ensure_ascii=False) + "\n")
 
@@ -82,10 +82,10 @@ class Store:
 
     @staticmethod
     def publish_public(payload: dict) -> str:
-        """GitHub Pages ke liye safe copy — poster ka naam aur contact hata kar.
+        """Safe copy for GitHub Pages, without poster names or contact values.
 
-        Post ka link rehta hai (wo waise bhi public hai), par kisi ki personal
-        detail hamare page pe dobara publish nahi hoti.
+        The link to the original post stays, since that post is already public;
+        nobody's personal details get republished on our page.
         """
         safe = []
         for lead in payload["leads"]:
@@ -99,7 +99,7 @@ class Store:
         return PUBLIC_FILE
 
     def publish(self, fresh: list) -> dict:
-        """Naye leads purane ke saath merge, window ke bahar wale drop."""
+        """Merge new leads with existing ones and drop anything past the window."""
         cutoff = now_utc() - timedelta(days=self.live_window_days)
         merged, keys = [], set()
         for lead in fresh + self.load_leads():
