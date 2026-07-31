@@ -1,56 +1,107 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Project Hunter — live client leads</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Project Hunter — client leads</title>
+  <link rel="stylesheet" href="vendor/bootstrap.min.css">
 </head>
-<body>
+<body class="bg-body-tertiary">
 
-<header class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <span class="brand-mark">P</span>
-      <span>Project Hunter<small id="tagline">client leads, roz auto-collected</small></span>
+<nav class="navbar navbar-expand-lg bg-body border-bottom sticky-top">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="./">
+      Project&nbsp;Hunter
+      <span class="badge text-bg-primary align-middle ms-1" id="navCount">0</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link active" href="./">Leads</a></li>
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/pradeepprajapati9/project_hunter" target="_blank" rel="noopener">Guide</a>
+        </li>
+      </ul>
+      <span class="navbar-text small me-3" id="stamp"></span>
+      <button class="btn btn-sm btn-outline-secondary" id="themeBtn" type="button">Light</button>
     </div>
-    <div class="stamp" id="stamp"></div>
   </div>
-</header>
+</nav>
 
-<main class="wrap">
-  <section class="stats" id="stats"></section>
+<main class="container py-4">
 
-  <div class="toolbar">
-    <label class="search">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-           stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-      <input id="q" type="search" placeholder="Search kaam, skill, client…" autocomplete="off">
-    </label>
+  <!-- stats -->
+  <div class="row g-3 mb-4" id="stats"></div>
 
-    <select id="sort">
-      <option value="fresh">Newest first</option>
-      <option value="score">Best score</option>
-      <option value="budget">Budget stated first</option>
-    </select>
+  <!-- filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-2 align-items-center">
+        <div class="col-12 col-lg-4">
+          <input type="search" class="form-control" id="q" placeholder="Search kaam, skill, client…">
+        </div>
+        <div class="col-6 col-lg-3">
+          <select class="form-select" id="cat"><option value="all">Sabhi categories</option></select>
+        </div>
+        <div class="col-6 col-lg-2">
+          <select class="form-select" id="sort">
+            <option value="fresh">Newest first</option>
+            <option value="score">Best score</option>
+            <option value="budget">Budget first</option>
+          </select>
+        </div>
+        <div class="col-12 col-lg-3 text-lg-end">
+          <div class="btn-group btn-group-sm" role="group">
+            <input type="checkbox" class="btn-check" id="onlyBudget" autocomplete="off">
+            <label class="btn btn-outline-success" for="onlyBudget">Budget</label>
 
-    <label class="toggle"><input type="checkbox" id="onlyBudget"> Budget wale</label>
-    <label class="toggle"><input type="checkbox" id="onlyRemote"> Remote only</label>
-    <label class="toggle"><input type="checkbox" id="hideShady"> Shak wale hatao</label>
-    <label class="toggle"><input type="checkbox" id="hideDone"> Contacted chhupao</label>
+            <input type="checkbox" class="btn-check" id="onlyRemote" autocomplete="off">
+            <label class="btn btn-outline-primary" for="onlyRemote">Remote</label>
+
+            <input type="checkbox" class="btn-check" id="hideShady" autocomplete="off">
+            <label class="btn btn-outline-danger" for="hideShady">Safe</label>
+
+            <input type="checkbox" class="btn-check" id="hideDone" autocomplete="off">
+            <label class="btn btn-outline-secondary" for="hideDone">Naye</label>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="chips" id="chips"></div>
+  <!-- leads -->
+  <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3" id="grid"></div>
+  <div class="alert alert-secondary text-center my-5 d-none" id="notice"></div>
 
-  <section class="grid" id="grid"></section>
-  <div class="notice" id="notice" hidden></div>
-
-  <footer class="note">
-    Sources: Reddit (r/forhire, r/slavelabour, r/DoneDirtCheap, r/jobbit, r/HireaWriter) + Hacker News monthly freelancer thread.
-    <br>Refresh karne ke liye: <code>python hunter.py</code>
-  </footer>
+  <p class="text-body-secondary small text-center mt-5 mb-0">
+    Sources: Reddit (r/forhire, r/slavelabour, r/DoneDirtCheap, r/jobbit, r/HireaWriter) + Hacker News freelancer thread.
+    Refresh: <code>python hunter.py</code>
+  </p>
 </main>
 
+<!-- lead detail -->
+<div class="modal fade" id="leadModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3" id="modalTags"></div>
+        <div id="modalBody"></div>
+      </div>
+      <div class="modal-footer">
+        <span class="me-auto small text-body-secondary" id="modalContact"></span>
+        <a class="btn btn-primary" id="modalLink" target="_blank" rel="noopener">Reddit pe kholo</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/bootstrap.bundle.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

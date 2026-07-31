@@ -1,4 +1,4 @@
-/* project-hunter dashboard — leads.json padho, filter/sort karo, render karo */
+/* project-hunter dashboard — Bootstrap only, koi custom CSS nahi */
 
 const CAT_LABEL = {
   'web-dev': 'Web dev',
@@ -10,21 +10,24 @@ const CAT_LABEL = {
   'design': 'Design',
   'writing': 'Writing',
   'translation': 'Translation',
-  'video-audio': 'Video / audio / photo',
+  'video-audio': 'Video / audio',
   'marketing-seo': 'Marketing / sales',
   'va-support': 'VA / support',
   'teaching': 'Teaching',
   'finance-legal': 'Finance / legal',
   'ecommerce': 'E-commerce',
   'field-trade': 'Field / trade',
+  'odd-jobs': 'Odd jobs',
+  'other': 'Other',
 };
 
-/* auto-derived category ka naam bhi theek dikhe */
-const catLabel = (c) => CAT_LABEL[c] || c.replace(/[-_]/g, ' ').replace(/^\w/, (m) => m.toUpperCase());
-
-const CONTACT_LABEL = { email: 'email', telegram: 'telegram', form: 'apply form', discord: 'discord', dm: 'DM only' };
-
+const CONTACT_LABEL = { email: 'Email diya hai', telegram: 'Telegram', form: 'Apply form', discord: 'Discord', dm: 'DM karna hai' };
 const DONE_KEY = 'ph:contacted';
+const THEME_KEY = 'ph:theme';
+const SNIPPET = 150;
+
+const catLabel = (c) => CAT_LABEL[c] || c.replace(/[-_]/g, ' ').replace(/^\w/, (m) => m.toUpperCase());
+const el = (id) => document.getElementById(id);
 
 const state = {
   leads: [],
@@ -32,13 +35,11 @@ const state = {
   q: '',
   sort: 'fresh',
   onlyBudget: false,
-  hideDone: false,
   onlyRemote: false,
   hideShady: false,
+  hideDone: false,
   done: new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]')),
 };
-
-const el = (id) => document.getElementById(id);
 
 /* ---------- load ---------- */
 
@@ -48,12 +49,13 @@ async function load() {
     if (!res.ok) throw new Error(res.status);
     const data = await res.json();
     state.leads = data.leads || [];
-    el('stamp').innerHTML = `updated <b>${timeAgo(data.generated_at)}</b> &middot; <b>+${data.new_this_run || 0}</b> is run me`;
+    el('stamp').textContent = `updated ${timeAgo(data.generated_at)} · +${data.new_this_run || 0} naye`;
+    el('navCount').textContent = state.leads.length;
     renderStats();
-    renderChips();
+    fillCategories();
     render();
   } catch (err) {
-    showNotice('<b>leads.json nahi mila</b>Pehle scraper chalao: <code>python hunter.py</code>');
+    notice('leads.json nahi mila — pehle <code>python hunter.py</code> chalao.');
   }
 }
 
@@ -61,55 +63,48 @@ async function load() {
 
 function renderStats() {
   const leads = state.leads;
-  const today = leads.filter((l) => hoursAgo(l.posted_at) < 24).length;
-  const withBudget = leads.filter((l) => l.budget.stated).length;
-  const direct = leads.filter((l) => ['email', 'telegram', 'form', 'discord'].includes(l.contact.kind)).length;
-
-  const shady = leads.filter((l) => l.trust && l.trust.level === 'suspicious').length;
-
   const tiles = [
-    { n: leads.length, label: 'live leads', cls: '' },
-    { n: today, label: 'aaj ke', cls: 'accent' },
-    { n: withBudget, label: 'budget likha hai', cls: 'money' },
-    { n: direct, label: 'direct contact', cls: '' },
-    { n: shady, label: 'shak wale', cls: 'warn' },
-    { n: state.done.size, label: 'contacted', cls: '' },
+    { n: leads.length, label: 'Live leads', color: 'text-body' },
+    { n: leads.filter((l) => hoursAgo(l.posted_at) < 24).length, label: 'Aaj ke', color: 'text-primary' },
+    { n: leads.filter((l) => l.budget.stated).length, label: 'Budget likha hai', color: 'text-success' },
+    { n: state.done.size, label: 'Contacted', color: 'text-body-secondary' },
   ];
 
   el('stats').innerHTML = tiles.map((t) => `
-    <div class="stat ${t.cls}">
-      <div class="stat-num">${t.n}</div>
-      <div class="stat-label">${t.label}</div>
+    <div class="col-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-body py-3">
+          <div class="fs-3 fw-semibold ${t.color}">${t.n}</div>
+          <div class="small text-body-secondary">${t.label}</div>
+        </div>
+      </div>
     </div>`).join('');
 }
 
-/* ---------- chips ---------- */
+/* ---------- category dropdown ---------- */
 
-function renderChips() {
+function fillCategories() {
   const counts = {};
   state.leads.forEach((l) => { counts[l.category] = (counts[l.category] || 0) + 1; });
 
-  const cats = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
-  const chips = [`<button class="chip ${state.cat === 'all' ? 'on' : ''}" data-cat="all">All<span class="n">${state.leads.length}</span></button>`]
-    .concat(cats.map((c) => `<button class="chip ${state.cat === c ? 'on' : ''}" data-cat="${esc(c)}">${esc(catLabel(c))}<span class="n">${counts[c]}</span></button>`));
+  const opts = Object.keys(counts)
+    .sort((a, b) => counts[b] - counts[a])
+    .map((c) => `<option value="${esc(c)}">${esc(catLabel(c))} (${counts[c]})</option>`);
 
-  el('chips').innerHTML = chips.join('');
-  el('chips').querySelectorAll('.chip').forEach((btn) => {
-    btn.onclick = () => { state.cat = btn.dataset.cat; renderChips(); render(); };
-  });
+  el('cat').innerHTML = `<option value="all">Sabhi categories (${state.leads.length})</option>` + opts.join('');
 }
 
-/* ---------- render ---------- */
+/* ---------- filter + sort ---------- */
 
 function visible() {
   const q = state.q.toLowerCase().trim();
-  let out = state.leads.filter((l) => {
+  const out = state.leads.filter((l) => {
     if (state.cat !== 'all' && l.category !== state.cat) return false;
     if (state.onlyBudget && !l.budget.stated) return false;
-    if (state.hideDone && state.done.has(l.id)) return false;
     if (state.onlyRemote && (l.flags || []).includes('onsite')) return false;
     if (state.hideShady && l.trust && l.trust.level !== 'clean') return false;
-    if (q && !(`${l.title} ${l.body} ${l.source_detail}`.toLowerCase().includes(q))) return false;
+    if (state.hideDone && state.done.has(l.id)) return false;
+    if (q && !`${l.title} ${l.body} ${l.source_detail}`.toLowerCase().includes(q)) return false;
     return true;
   });
 
@@ -122,70 +117,98 @@ function visible() {
   return out.sort(cmp);
 }
 
+/* ---------- render ---------- */
+
 function render() {
   const leads = visible();
   const grid = el('grid');
 
   if (!leads.length) {
     grid.innerHTML = '';
-    showNotice('<b>Kuch nahi mila</b>Filter hatao ya scraper dubara chalao.');
+    notice('Is filter me kuch nahi mila.');
     return;
   }
-  el('notice').hidden = true;
+  el('notice').classList.add('d-none');
   grid.innerHTML = leads.map(card).join('');
 
-  grid.querySelectorAll('[data-done]').forEach((btn) => {
-    btn.onclick = () => toggleDone(btn.dataset.done);
+  grid.querySelectorAll('[data-done]').forEach((b) => { b.onclick = () => toggleDone(b.dataset.done); });
+  grid.querySelectorAll('[data-open]').forEach((b) => { b.onclick = () => openLead(b.dataset.open); });
+}
+
+function badges(l) {
+  const out = [`<span class="badge text-bg-secondary">${esc(catLabel(l.category))}</span>`];
+
+  if (l.budget.stated) {
+    out.push(`<span class="badge text-bg-success">${esc(l.budget.raw)}${l.budget.hourly ? '/hr' : ''}</span>`);
+  }
+  if (l.trust && l.trust.level === 'suspicious') {
+    out.push(`<span class="badge text-bg-danger" title="${esc((l.trust.reasons || []).join(' • '))}">⚠ dhyan se</span>`);
+  }
+  (l.flags || []).forEach((f) => {
+    const tone = f === 'urgent' ? 'text-bg-warning' : 'text-bg-light';
+    out.push(`<span class="badge ${tone}">${esc(f)}</span>`);
   });
-  grid.querySelectorAll('.snippet').forEach((p) => {
-    p.onclick = () => p.closest('.card').classList.toggle('open');
-  });
+  return out.join(' ');
 }
 
 function card(l) {
-  const isDone = state.done.has(l.id);
-  const hot = (l.score || 0) >= 60;
-  const budget = l.budget.stated
-    ? `<span class="tag money">${esc(l.budget.raw)}${l.budget.hourly ? '/hr' : ''}</span>`
-    : '';
-  const flags = (l.flags || []).map((f) => `<span class="tag ${f === 'urgent' ? 'urgent' : ''}">${f}</span>`).join('');
-  const trust = l.trust && l.trust.level === 'suspicious'
-    ? `<span class="tag warn" title="${esc((l.trust.reasons || []).join(' • '))}">⚠ dhyan se</span>`
-    : '';
-  const contact = l.contact.kind
-    ? `<span class="contact" title="${esc(l.contact.value)}">${CONTACT_LABEL[l.contact.kind] || l.contact.kind}</span>`
-    : '';
+  const done = state.done.has(l.id);
+  const tone = (l.score || 0) >= 70 ? 'text-bg-primary' : 'text-bg-secondary';
 
   return `
-  <article class="card ${isDone ? 'done' : ''}">
-    <div class="card-top">
-      <div class="score ${hot ? 'hot' : ''}" title="lead score ${l.score || 0}/100">${l.score || 0}</div>
-      <div>
-        <h3><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.title)}</a></h3>
-        <div class="meta">
-          <span>${esc(l.source)}</span><span class="dot">•</span>
-          <span>${esc(l.source_detail)}</span><span class="dot">•</span>
-          <span>${timeAgo(l.posted_at)}</span>
-          ${l.author ? `<span class="dot">•</span><span>${esc(l.author)}</span>` : ''}
+  <div class="col">
+    <div class="card h-100 ${done ? 'opacity-50' : ''}">
+      <div class="card-body d-flex flex-column">
+
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+          <h6 class="card-title mb-0 lh-base">${esc(l.title)}</h6>
+          <span class="badge ${tone} flex-shrink-0" title="lead score ${l.score || 0}/100">${l.score || 0}</span>
         </div>
+
+        <p class="card-subtitle small text-body-secondary mb-2">
+          ${esc(l.source_detail)} · ${timeAgo(l.posted_at)}${l.author ? ' · ' + esc(l.author) : ''}
+        </p>
+
+        <div class="d-flex flex-wrap gap-1 mb-3">${badges(l)}</div>
+
+        <p class="card-text small text-body-secondary">${esc(snippet(l.body))}</p>
+
+        <div class="d-flex gap-2 mt-auto pt-2">
+          <button class="btn btn-sm btn-primary" data-open="${l.id}">Details</button>
+          <a class="btn btn-sm btn-outline-secondary" href="${esc(l.url)}" target="_blank" rel="noopener">Post</a>
+          <button class="btn btn-sm ${done ? 'btn-success' : 'btn-outline-success'} ms-auto" data-done="${l.id}">
+            ${done ? '✓ contacted' : 'Contacted'}
+          </button>
+        </div>
+
       </div>
     </div>
-
-    <div class="tags">
-      <span class="tag cat ${l.category_auto ? 'auto' : ''}" title="${l.category_auto ? 'auto-detected — pakka nahi' : 'keyword match'}">${esc(catLabel(l.category))}</span>
-      ${l.category_auto && l.topic ? `<span class="tag">${esc(l.topic)}</span>` : ''}
-      ${budget}${trust}${flags}
-    </div>
-
-    <p class="snippet" title="click to expand">${esc(l.body)}</p>
-
-    <div class="card-foot">
-      <a class="btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">Kholo</a>
-      <button class="btn ghost ${isDone ? 'on' : ''}" data-done="${l.id}">${isDone ? '✓ contacted' : 'mark contacted'}</button>
-      ${contact}
-    </div>
-  </article>`;
+  </div>`;
 }
+
+/* ---------- detail modal ---------- */
+
+const modal = new bootstrap.Modal('#leadModal');
+
+function openLead(id) {
+  const l = state.leads.find((x) => x.id === id);
+  if (!l) return;
+
+  el('modalTitle').textContent = l.title;
+  el('modalTags').innerHTML = badges(l);
+  el('modalBody').innerHTML = (l.body || '(koi detail nahi)')
+    .split('\n')
+    .filter((line) => line.trim())
+    .map((line) => `<p class="mb-2">${esc(line)}</p>`)
+    .join('');
+  el('modalContact').textContent = l.contact.kind
+    ? `${CONTACT_LABEL[l.contact.kind] || l.contact.kind}${l.contact.value ? ': ' + l.contact.value : ''}`
+    : 'Contact post me hi hai';
+  el('modalLink').href = l.url;
+  modal.show();
+}
+
+/* ---------- actions ---------- */
 
 function toggleDone(id) {
   state.done.has(id) ? state.done.delete(id) : state.done.add(id);
@@ -194,12 +217,17 @@ function toggleDone(id) {
   render();
 }
 
-/* ---------- helpers ---------- */
-
-function showNotice(html) {
+function notice(html) {
   const n = el('notice');
   n.innerHTML = html;
-  n.hidden = false;
+  n.classList.remove('d-none');
+}
+
+/* ---------- helpers ---------- */
+
+function snippet(text) {
+  const clean = (text || '').replace(/\s+/g, ' ').trim();
+  return clean.length > SNIPPET ? clean.slice(0, SNIPPET).trimEnd() + '…' : clean;
 }
 
 function hoursAgo(iso) {
@@ -221,9 +249,22 @@ function esc(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+/* ---------- theme ---------- */
+
+function setTheme(mode) {
+  document.documentElement.setAttribute('data-bs-theme', mode);
+  el('themeBtn').textContent = mode === 'dark' ? 'Light' : 'Dark';
+  localStorage.setItem(THEME_KEY, mode);
+}
+
+setTheme(localStorage.getItem(THEME_KEY) || 'dark');
+el('themeBtn').onclick = () =>
+  setTheme(document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
+
 /* ---------- events ---------- */
 
 el('q').oninput = (e) => { state.q = e.target.value; render(); };
+el('cat').onchange = (e) => { state.cat = e.target.value; render(); };
 el('sort').onchange = (e) => { state.sort = e.target.value; render(); };
 el('onlyBudget').onchange = (e) => { state.onlyBudget = e.target.checked; render(); };
 el('onlyRemote').onchange = (e) => { state.onlyRemote = e.target.checked; render(); };

@@ -1,8 +1,10 @@
+# credentials — never commit
 secrets.json
-data/seen.json
-data/leads.json
-data/archive.jsonl
-data/rejected.jsonl
-data/run.log
+.env
+
+# scraped data (client posts, author names, contact details) — stays local
+data/
+
+# python
 __pycache__/
 *.pyc
