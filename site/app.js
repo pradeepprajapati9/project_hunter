@@ -43,11 +43,21 @@ const state = {
 
 /* ---------- load ---------- */
 
+/* Local pe poora data (../data/), GitHub Pages pe safe copy (data/) */
+async function fetchLeads() {
+  for (const path of ['../data/leads.json', 'data/leads.json']) {
+    try {
+      const res = await fetch(path + '?t=' + Date.now());
+      if (res.ok) return await res.json();
+    } catch (err) { /* agla path try karo */ }
+  }
+  return null;
+}
+
 async function load() {
   try {
-    const res = await fetch('../data/leads.json?t=' + Date.now());
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
+    const data = await fetchLeads();
+    if (!data) throw new Error('no data');
     state.leads = data.leads || [];
     el('stamp').textContent = `updated ${timeAgo(data.generated_at)} · +${data.new_this_run || 0} naye`;
     el('navCount').textContent = state.leads.length;

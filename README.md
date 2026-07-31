@@ -91,6 +91,30 @@ also works offline or behind a CDN-blocking network.
 * "Contacted" marks a lead as handled — stored in the browser via `localStorage`
 * Light and dark theme toggle
 
+## Live dashboard on GitHub Pages
+
+`.github/workflows/hunt.yml` runs the scraper four times a day and deploys the dashboard to GitHub
+Pages, so the board is readable from a phone without running anything locally.
+
+One-time setup: **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+Then run the workflow once from the Actions tab (`Run workflow`) instead of waiting for the schedule.
+
+What gets published:
+
+* The dashboard reads `data/leads.public.json`, a sanitised copy — poster usernames and contact
+  values are stripped out. The link to the original post is kept, since that post is already public.
+* Nothing from `data/` is ever committed. The published copy only exists inside the Pages
+  deployment, not in git history.
+* Dedupe memory carries over between runs through the Actions cache.
+
+Locally the dashboard still loads the full `data/leads.json`, contact details included — the page
+tries the local file first and falls back to the published copy.
+
+Two things worth knowing: GitHub's scheduled runs are queued, so they can be late by several
+minutes, and Reddit sometimes blocks datacenter IP ranges. If the workflow starts returning 403s,
+keep running `hunter.py` locally and publish by committing `data/leads.public.json` into the
+workflow's build step instead.
+
 ## Telegram alerts (optional)
 
 Speed matters: on busy subreddits the first few replies get the work, so a phone alert is worth setting up.
@@ -135,6 +159,7 @@ your machine.
 | File | Contents |
 |---|---|
 | `leads.json` | Current board, read by the dashboard |
+| `leads.public.json` | Sanitised copy for GitHub Pages (no usernames, no contact values) |
 | `seen.json` | Dedupe memory, 30 days |
 | `archive.jsonl` | Every published lead, append-only |
 | `rejected.jsonl` | Leads dropped as scams, with reasons |

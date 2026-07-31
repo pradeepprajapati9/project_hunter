@@ -56,6 +56,7 @@ def main() -> int:
 
     store.save_seen()
     payload = store.publish(fresh)
+    store.publish_public(payload)   # Pages ke liye safe copy (naam/contact ke bina)
 
     print("\n" + "-" * 52)
     print(f"scraped   : {len(scraped)}")

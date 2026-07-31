@@ -11,6 +11,7 @@ SEEN_FILE = os.path.join(DATA_DIR, "seen.json")
 LEADS_FILE = os.path.join(DATA_DIR, "leads.json")
 ARCHIVE_FILE = os.path.join(DATA_DIR, "archive.jsonl")
 REJECTED_FILE = os.path.join(DATA_DIR, "rejected.jsonl")
+PUBLIC_FILE = os.path.join(DATA_DIR, "leads.public.json")
 
 _STOP = {"a", "an", "the", "for", "to", "of", "and", "or", "in", "on", "with", "need",
          "needed", "looking", "want", "wanted", "help", "please", "someone", "hiring",
@@ -78,6 +79,24 @@ class Store:
                 return json.load(f).get("leads", [])
         except (OSError, ValueError):
             return []
+
+    @staticmethod
+    def publish_public(payload: dict) -> str:
+        """GitHub Pages ke liye safe copy — poster ka naam aur contact hata kar.
+
+        Post ka link rehta hai (wo waise bhi public hai), par kisi ki personal
+        detail hamare page pe dobara publish nahi hoti.
+        """
+        safe = []
+        for lead in payload["leads"]:
+            copy = dict(lead)
+            copy["author"] = ""
+            copy["contact"] = {"kind": lead["contact"]["kind"], "value": ""}
+            copy.pop("fingerprint", None)
+            safe.append(copy)
+
+        _write_json(PUBLIC_FILE, {**payload, "leads": safe, "public": True})
+        return PUBLIC_FILE
 
     def publish(self, fresh: list) -> dict:
         """Naye leads purane ke saath merge, window ke bahar wale drop."""
