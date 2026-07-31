@@ -1,0 +1,8 @@
+secrets.json
+data/seen.json
+data/leads.json
+data/archive.jsonl
+data/rejected.jsonl
+data/run.log
+__pycache__/
+*.pyc

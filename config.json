@@ -1,0 +1,67 @@
+{
+  "user_agent": "project-hunter/0.1 (personal lead aggregator)",
+  "request_timeout": 20,
+  "request_delay_sec": 7,
+
+  "live_window_days": 21,
+  "seen_memory_days": 30,
+
+  "reddit": {
+    "subreddits": [
+      { "name": "forhire",       "tags": ["[hiring]"] },
+      { "name": "slavelabour",   "tags": ["[wtb]", "[task]"] },
+      { "name": "DoneDirtCheap", "tags": ["[wtb]", "[task]"] },
+      { "name": "jobbit",        "tags": ["[hiring]"] },
+      { "name": "HireaWriter",   "tags": ["[hiring]"] }
+    ],
+    "limit_per_sub": 100
+  },
+
+  "hn": {
+    "thread_query": "Seeking freelancer",
+    "threads_to_scan": 2
+  },
+
+  "reject_keywords": [
+    "for hire", "forhire", "seeking work", "looking for work",
+    "available for work", "my portfolio", "hire me", "i am available",
+    "resume review", "seeking employment",
+    "adult content", "nsfw", "onlyfans", "escort", "camgirl", "sexting"
+  ],
+
+  "categories": {
+    "web-dev": ["website", "web app", "webapp", "wordpress", "shopify", "landing page", "html", "css", "javascript", "react", "next.js", "vue", "php", "laravel", "django", "flask", "frontend", "front-end", "backend", "back-end", "full stack", "fullstack", "webflow", "wix", "squarespace", "web developer", "site build", "web design"],
+    "mobile-app": ["android", "ios app", "flutter", "react native", "mobile app", "apk", "play store", "app store", "swift", "kotlin", "app developer"],
+    "automation-bot": ["bot", "scraper", "scraping", "automation", "automate", "zapier", "make.com", "n8n", "selenium", "puppeteer", "playwright", "api integration", "webhook", "discord bot", "telegram bot", "whatsapp bot", "workflow", "script to"],
+    "ai-ml": ["ai agent", "gpt", "llm", "chatgpt", "claude", "machine learning", "ml model", "openai", "chatbot", "prompt engineer", "fine-tune", "computer vision", "nlp", "ai tool", "ai automation", "data annotation", "data labeling", "data collection", "voice data"],
+    "software-eng": ["python developer", "java developer", "c++", "c#", ".net", "golang", "rust developer", "algorithm", "refactor", "code review", "bug fix", "debugging", "software engineer", "sdk", "library", "unit test", "qa tester", "testing", "devops", "docker", "kubernetes", "aws", "azure", "linux server", "cybersecurity", "penetration test", "blockchain", "solidity", "smart contract", "game dev", "unity", "unreal"],
+    "data": ["data entry", "excel", "google sheets", "spreadsheet", "data analysis", "dashboard", "power bi", "tableau", "sql", "database", "data cleaning", "csv", "lead list", "web research", "research analyst", "market research", "survey"],
+    "design": ["logo", "graphic design", "designer", "ui/ux", "ui ux", "figma", "photoshop", "illustrator", "banner", "thumbnail", "poster", "branding", "mockup", "canva", "illustration", "packaging design", "tech pack", "pattern making", "3d model", "blender", "cad", "autocad", "architect", "interior design"],
+    "writing": ["writer", "writing", "content", "blog post", "article", "copywriting", "copywriter", "seo content", "ghostwriter", "editing", "proofread", "transcription", "scribing", "typing", "resume writing", "cv writing", "technical writing", "script writing"],
+    "translation": ["translation", "translate", "translator", "localization", "subtitling", "interpreter", "bilingual"],
+    "video-audio": ["video edit", "video editor", "editing video", "after effects", "premiere", "davinci", "voice over", "voiceover", "voice actor", "voice acting", "animation", "animator", "reels", "shorts", "podcast edit", "subtitle", "captions", "music produc", "mixing", "mastering", "sound design", "audio clean", "noise removal", "singer", "singing", "song", "vocal", "guitar", "piano", "daw", "ableton", "fl studio", "photograph", "photo edit", "retouch", "thumbnail edit"],
+    "marketing-seo": ["seo", "backlink", "google ads", "facebook ads", "meta ads", "ppc", "social media manager", "smm", "email marketing", "cold email", "cold call", "lead generation", "lead gen", "appointment setter", "instagram growth", "affiliate", "influencer", "brand ambassador", "promoter", "sales representative", "sales rep", "closer", "telemarketing"],
+    "va-support": ["virtual assistant", "virtual admin", "admin assistant", "executive assistant", "customer support", "customer service", "operations assistant", "moderator", "recruiter", "sourcing", "scheduling", "personal shopper", "chat support", "call center", "bpo"],
+    "teaching": ["tutor", "tutoring", "teacher", "teaching", "coach", "trainer", "lesson", "homework help", "exam prep", "mentor"],
+    "finance-legal": ["bookkeeping", "bookkeeper", "accountant", "accounting", "tax", "gst", "payroll", "invoice", "audit", "financial model", "legal", "contract draft", "paralegal", "compliance", "insurance"],
+    "ecommerce": ["dropship", "amazon fba", "amazon listing", "etsy", "ebay", "product listing", "inventory", "order processing", "supplier", "sourcing agent", "import", "export"],
+    "field-trade": ["driver", "delivery", "warehouse", "mechanic", "electrician", "plumber", "carpenter", "painter", "cleaning", "handyman", "construction", "installation", "repair technician", "security guard", "cook", "chef", "nurse", "caregiver", "labour", "labor"],
+    "odd-jobs": ["errand", "personal task", "accountability partner", "gym", "fitness", "help me find", "find me a", "phone call for me", "call on my behalf", "beta test", "test my app", "user testing", "usability test", "feedback on my", "review my resume", "review my website", "sign up and", "referral", "small task", "quick task", "one small", "advice on", "consult", "second opinion", "proofread my", "buy on my behalf", "pickup", "shopping"]
+  },
+
+  "score_weights": {
+    "budget_stated": 30,
+    "contact_direct": 15,
+    "project_words": 15,
+    "fresh_today": 20,
+    "trust_clean": 20
+  },
+
+  "project_words": [
+    "project", "freelance", "freelancer", "contract", "gig", "one-time",
+    "one time", "per project", "fixed price", "remote", "milestone", "quote"
+  ],
+
+  "min_score_to_publish": 25,
+  "drop_scams": true
+}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Hunter — live client leads</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">P</span>
+      <span>Project Hunter<small id="tagline">client leads, roz auto-collected</small></span>
+    </div>
+    <div class="stamp" id="stamp"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="stats" id="stats"></section>
+
+  <div class="toolbar">
+    <label class="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input id="q" type="search" placeholder="Search kaam, skill, client…" autocomplete="off">
+    </label>
+
+    <select id="sort">
+      <option value="fresh">Newest first</option>
+      <option value="score">Best score</option>
+      <option value="budget">Budget stated first</option>
+    </select>
+
+    <label class="toggle"><input type="checkbox" id="onlyBudget"> Budget wale</label>
+    <label class="toggle"><input type="checkbox" id="onlyRemote"> Remote only</label>
+    <label class="toggle"><input type="checkbox" id="hideShady"> Shak wale hatao</label>
+    <label class="toggle"><input type="checkbox" id="hideDone"> Contacted chhupao</label>
+  </div>
+
+  <div class="chips" id="chips"></div>
+
+  <section class="grid" id="grid"></section>
+  <div class="notice" id="notice" hidden></div>
+
+  <footer class="note">
+    Sources: Reddit (r/forhire, r/slavelabour, r/DoneDirtCheap, r/jobbit, r/HireaWriter) + Hacker News monthly freelancer thread.
+    <br>Refresh karne ke liye: <code>python hunter.py</code>
+  </footer>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
